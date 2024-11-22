@@ -1,0 +1,6 @@
+express-backend/.env
+express-backend/.env.test
+express-backend/node_modules/
+vue-frontend/.env
+vue-frontend/node_modules/
+vue-frontend/.env.test
