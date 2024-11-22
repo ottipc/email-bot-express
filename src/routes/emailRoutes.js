@@ -1,38 +1,13 @@
+// src/routes/emailRoutes.js
 const express = require('express');
-const { validateEmail } = require('../middlewares/validationMiddleware');
-const { authenticateJWT } = require('../middlewares/authMiddleware');
-const { generateReply } = require('../controllers/emailController');
-
 const router = express.Router();
+const { validateEmailInput, validationMiddleware } = require('../middlewares/validationMiddleware');
+const { generateEmailReply } = require('../controllers/emailController');  // Verweise auf den Controller
 
-/**
- * @swagger
- * /generate-email-reply:
- *   post:
- *     summary: Generate a formal email reply
- *     tags: [Emails]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               subject:
- *                 type: string
- *               body:
- *                 type: string
- *               sender:
- *                 type: string
- *     responses:
- *       200:
- *         description: Success
- */
-router.post(
-    '/generate-email-reply',
-    authenticateJWT,
-    validateEmail,
-    generateReply
-);
 
+console.log(validateEmailInput);    // Soll eine Funktion ausgeben
+console.log(validationMiddleware); // Soll eine Funktion ausgeben
+console.log(generateEmailReply);    // Soll eine Funktion ausgeben
+
+router.post('/generate-email-reply', validateEmailInput, validationMiddleware, generateEmailReply);
 module.exports = router;

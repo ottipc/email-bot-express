@@ -1,7 +1,7 @@
 const Email = require('../models/emailModel');
 const { generateChatGPTReply } = require('../services/openaiService');
 
-const generateReply = async (req, res, next) => {
+const generateEmailReply = async (req, res, next) => {
     try {
         const { subject, body, sender } = req.body;
 
@@ -21,8 +21,9 @@ const generateReply = async (req, res, next) => {
             reply_body: email.replyBody,
         });
     } catch (error) {
+        console.log(error);
         next(error);
     }
 };
 
-module.exports = { generateReply };
+module.exports = { generateEmailReply };
