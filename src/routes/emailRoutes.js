@@ -10,4 +10,6 @@ console.log(validationMiddleware); // Soll eine Funktion ausgeben
 console.log(generateEmailReply);    // Soll eine Funktion ausgeben
 
 router.post('/generate-email-reply', validateEmailInput, validationMiddleware, generateEmailReply);
+router.get('/emails', emailController.getEmails);
+router.delete('/email/:id', emailController.deleteEmail);
 module.exports = router;

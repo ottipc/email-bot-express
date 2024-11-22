@@ -16,8 +16,9 @@ const generateChatGPTReply = async (message) => {
         return response.data.choices[0].message.content;
     } catch (err) {
         console.error('Error with OpenAI API:', err.response ? err.response.data : err.message);
-        throw new Error('Could not generate reply');
+        throw new Error('API Error');
     }
 };
 
-module.exports = { generateChatGPTReply };
+
+module.exports = { generateChatGPTReply};
