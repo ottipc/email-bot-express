@@ -1,14 +1,21 @@
-// src/middlewares/validationMiddleware.js
-const validateEmailInput = (req, res, next) => {
-    const { subject, body, sender } = req.body;
-    if (!subject || !body || !sender) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-    next(); // Wenn alles in Ordnung, zum nächsten Middleware oder Controller weitergehen
-};
+const { body, validationResult } = require("express-validator");
 
+// Validierung der E-Mail-Eingabedaten
+const validateEmailInput = [
+    body("subject").notEmpty().withMessage("Betreff ist erforderlich"),
+    body("body").notEmpty().withMessage("E-Mail-Inhalt ist erforderlich"),
+    body("sender").isEmail().withMessage("Eine gültige Absenderadresse ist erforderlich"),
+];
+
+// Middleware zur Fehlerüberprüfung
 const validationMiddleware = (req, res, next) => {
-    // Weitere Validierungen können hier hinzugefügt werden
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            success: false,
+            errors: errors.array(),
+        });
+    }
     next();
 };
 

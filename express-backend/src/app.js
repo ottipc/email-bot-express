@@ -8,7 +8,7 @@ const swaggerJsdoc = require('swagger-jsdoc');
 const emailRoutes = require('./routes/emailRoutes');
 const errorMiddleware = require('./middlewares/errorMiddleware');
 const app = express();
-
+//const mongoose = require("mongoose");
 // Middleware
 app.use(express.json());
 app.use(morgan('dev'));
@@ -30,6 +30,16 @@ const swaggerSpec = swaggerJsdoc({
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 const PORT = process.env.PORT || 3000;
 
+/*
+//Database Connection
+mongoose
+    .connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log("Connected to MongoDB"))
+    .catch((error) => {
+        console.error("Error connecting to MongoDB:", error.message);
+        process.exit(1);
+    });
+*/
 
 app.use((req, res, next) => {
     console.log(`[${req.method}] ${req.path}`);
@@ -41,7 +51,7 @@ app.use((req, res, next) => {
     next();
 });
 // Routes
-app.use('/api/email', emailRoutes);
+app.use('/api', emailRoutes);
 console.log(errorMiddleware)
 // Error Handling Middleware
 app.use(errorMiddleware);

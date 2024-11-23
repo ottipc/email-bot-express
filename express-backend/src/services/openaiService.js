@@ -15,8 +15,8 @@ const generateChatGPTReply = async (message) => {
 
         return response.data.choices[0].message.content;
     } catch (err) {
-        console.error('Error with OpenAI API:', err.response ? err.response.data : err.message);
-        throw new Error('API Error');
+        console.error('Error with OpenAI API (model : gpt-3.5-turbo:', err.response ? err.response.data : err.message);
+        throw new Error('API Error (model gpt-3.5-turbo)');
     }
 };
 

@@ -11,6 +11,7 @@ jest.mock('../../src/services/openaiService', () => ({
 let mongoServer;
 
 beforeAll(async () => {
+    await mongoose.disconnect();
     mongoServer = await MongoMemoryServer.create();
     const uri = mongoServer.getUri();
     await mongoose.connect(uri, {
@@ -27,7 +28,7 @@ afterAll(async () => {
 describe('Email Routes Integration Tests', () => {
     it('should create a new email reply', async () => {
         const response = await request(app)
-            .post('/api/email/generate-email-reply')
+            .post('/api/generate-email-reply')
             .send({
                 subject: 'Test Subject',
                 body: 'Test Body',

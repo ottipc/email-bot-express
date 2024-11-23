@@ -1,3 +1,5 @@
+
+require('./src/listener/emaiListener');
 const app = require('./src/app'); // App importieren
 const PORT = process.env.PORT || 3000;
 
