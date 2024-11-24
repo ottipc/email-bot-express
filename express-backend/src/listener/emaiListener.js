@@ -2,9 +2,11 @@ const Imap = require("imap");
 const { simpleParser } = require("mailparser");
 const { generateEmailReply } = require("../controllers/emailController");
 const sendEmail = require("../services/sendEmail");
-require("dotenv").config(); // Lädt die Umgebungsvariablen aus der .env-Datei
+require("dotenv").config(); // Loading Environment from .env-Datei
+const processedEmails = new Set(); // Speichert IDs verarbeiteter E-Mails
 
-// IMAP-Verbindung konfigurieren
+
+// config IMAP-Connection
 const imap = new Imap({
     user: process.env.EMAIL_USER,
     password: process.env.EMAIL_PASSWORD,
@@ -14,24 +16,25 @@ const imap = new Imap({
     tlsOptions: { rejectUnauthorized: false }, // Nur im Entwicklungsmodus!
 });
 
-// Queue und Status
+// Queue and State
 const emailQueue = []; // Warteschlange für E-Mails
 let processing = false; // Status: Wird gerade verarbeitet?
 
+// chose Directory of Emails listen to
 function openInbox(cb) {
     imap.openBox("INBOX", false, cb);
 }
 
-// Verarbeite die nächste E-Mail in der Queue
+// Processing next Email in Queue...
 async function processQueue() {
-    if (processing || emailQueue.length === 0) return; // Wenn bereits verarbeitet wird oder Queue leer ist, abbrechen
+    if (processing || emailQueue.length === 0) return; // If already processed or queue is empty, abort
 
     processing = true; // Setze Status auf "wird verarbeitet"
     const emailData = emailQueue.shift(); // Entferne die erste E-Mail aus der Queue
 
-    console.log("Verarbeite E-Mail:", emailData);
+    console.log("Processing E-Mail...:", emailData);
 
-    // Simuliere eine Anfrage an den Controller
+    // Simulate a Response to the Controller
     const fakeReq = {
         body: {
             subject: emailData.subject,
@@ -43,7 +46,7 @@ async function processQueue() {
     const fakeRes = {
         status: (code) => ({
             json: async (data) => {
-                console.log(`Controller Antwort: Status ${code}`, data);
+                console.log(`Controller Response: Status ${code}`, data);
 
                 // Sende Antwort-E-Mail
                 try {
@@ -52,9 +55,9 @@ async function processQueue() {
                         data.reply_subject,
                         data.reply_body
                     );
-                    console.log("Antwort gesendet an:", emailData.sender);
+                    console.log("Response Email send to :", emailData.sender);
                 } catch (error) {
-                    console.error("Fehler beim Senden der Antwort-E-Mail:", error.message);
+                    console.error("Error replying Response-E-Mail:", error.message);
                 }
 
                 return fakeRes;
@@ -65,25 +68,25 @@ async function processQueue() {
     try {
         await generateEmailReply(fakeReq, fakeRes, console.error); // Rufe den Controller auf
     } catch (error) {
-        console.error("Fehler beim Aufruf des Controllers:", error.message);
+        console.error("Error calling the Controller:", error.message);
     } finally {
-        processing = false; // Verarbeitung abgeschlossen
-        processQueue(); // Nächste E-Mail in der Queue verarbeiten
+        processing = false; // Processing finished
+        processQueue(); // Process next E-Mail in the Queue
     }
 }
 
 // Listener für neue E-Mails einrichten
 imap.once("ready", () => {
-    console.log("IMAP verbunden.");
+    console.log("IMAP connected...");
 
     openInbox((err, box) => {
         if (err) throw err;
 
-        console.log("Posteingang geöffnet. Warte auf neue E-Mails...");
+        console.log("Email Inout opened. Waiting for new E-Mails...");
 
         // Überwache neue E-Mails
         imap.on("mail", () => {
-            console.log("Neue E-Mail erhalten!");
+            //console.log("Got new E-Mail!");
             fetchNewEmails();
         });
     });
@@ -101,13 +104,22 @@ async function fetchNewEmails() {
             return;
         }
 
-        const fetch = imap.fetch(results, { bodies: "" });
+        const fetch = imap.fetch(results, { bodies: "" , markSeen: true});  //fetch new Emails and mark as seen
 
         fetch.on("message", (msg) => {
             msg.on("body", async (stream) => {
                 const parsedEmail = await simpleParser(stream);
 
-                console.log("Neue E-Mail:", {
+                //check if email is processed
+                const emailId = parsedEmail.messageId; // Eindeutige Kennung der E-Mail
+                if (processedEmails.has(emailId)) {
+                    console.log("E-Mail bereits verarbeitet:", emailId);
+                    return; // Überspringe verarbeitete E-Mails
+                }
+
+                processedEmails.add(emailId); // Markiere die E-Mail als verarbeitet
+
+                console.debug("New E-Mail:", {
                     from: parsedEmail.from.text,
                     subject: parsedEmail.subject,
                     text: parsedEmail.text,
