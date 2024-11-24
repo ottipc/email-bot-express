@@ -50,13 +50,13 @@ const deleteEmail = async (req, res) => {
 const generateEmailReply = async (req, res, next) => {
     try {
         const { subject, body, sender } = req.body;
+        const gptprompt = process.env.GPT_PROMPT + process.env.EMAIL_SIGNATURE + "\n\nOriginal Mail: \n\n" ;
+        //console.log('generateEmailReply called  with:', {gptprompt, subject, body, sender });
 
-        console.log('generateEmailReply aufgerufen mit:', { subject, body, sender });
+        // Generate reply with ChatGPT
+        const replyBody = await generateChatGPTReply(gptprompt, subject, body);
 
-        // Antwort mit ChatGPT generieren
-        const replyBody = await generateChatGPTReply(subject, body);
-
-        // Neue E-Mail speichern
+        // saved new E-Mail
         const email = new Email({
             subject,
             body,
@@ -66,7 +66,7 @@ const generateEmailReply = async (req, res, next) => {
         });
         await email.save();
 
-        console.log('E-Mail erfolgreich gespeichert:', email);
+        console.log('E-Mail saved successfully:', email);
 
         // Antwort senden
         res.status(200).json({
@@ -74,7 +74,7 @@ const generateEmailReply = async (req, res, next) => {
             reply_body: email.replyBody,
         });
     } catch (error) {
-        console.error('Fehler in generateEmailReply:', error.message);
+        console.error('Error in generateEmailReply:', error.message);
         next(error);
     };
 
