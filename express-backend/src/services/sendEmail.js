@@ -10,7 +10,7 @@ async function sendEmail(to, subject, text) {
             pass: process.env.EMAIL_PASSWORD,
         },
         tls : {
-            rejectUnauthorized: false // Unsichere Zertifikate zulassen (optional, nur für Tests)
+            rejectUnauthorized: false // Allow insecure certificates (optional, for testing only)
         }
     });
 
@@ -23,10 +23,10 @@ async function sendEmail(to, subject, text) {
 
     try {
         await transporter.sendMail(mailOptions);
-        console.log('E-Mail erfolgreich gesendet an:', to);
+        console.log('Email successfully sent to:', to);
     } catch (error) {
-        console.error('Fehler beim Senden der E-Mail:', error.message);
-        throw new Error('E-Mail konnte nicht gesendet werden.');
+        console.error('Error sending email:', error.message);
+        throw new Error('Email could not be sent.');
     }
 }
 
