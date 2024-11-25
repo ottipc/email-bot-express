@@ -44,27 +44,32 @@ export default {
     };
   },
   methods: {
-    async generateReply() {
+    async generateReply(emailId) {
       try {
-        const response = await fetch('http://localhost:3000/generate-email-reply', {
-          method: 'POST',
+        const response = await fetch("http://localhost:3000/api/email/manual-reply", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify(this.emailData),
+          body: JSON.stringify({ emailId }),
         });
 
         if (!response.ok) {
-          throw new Error('Fehler bei der Generierung der Antwort');
+          throw new Error("Failed to generate reply");
         }
 
         const data = await response.json();
-        this.generatedReply = data;
+        console.log("API Response:", data); // Debugging: API-Antwort überprüfen
+
+        // Setze die Antwort und öffne das Popup
+        this.popupReply = data.replyBody || ""; // Fallback auf einen leeren String
+        this.selectedEmailId = emailId;
+        this.showPopup = true; // Popup erst jetzt öffnen
       } catch (error) {
-        console.error('Error:', error);
-        alert('Fehler beim Generieren der Antwort');
+        console.error("Error generating reply:", error.message);
+        this.popupReply = ""; // Setze einen leeren String, um den Fehler zu vermeiden
       }
-    },
+    }
   },
 };
 </script>
