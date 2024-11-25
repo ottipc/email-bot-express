@@ -1,111 +1,73 @@
 <template>
-  <div class="email-form">
-    <h2>E-Mail-Antwort generieren</h2>
-
-    <!-- E-Mail Eingabeformular -->
-    <form @submit.prevent="generateReply">
-      <div class="form-group">
-        <label for="subject">Betreff</label>
-        <input type="text" id="subject" v-model="emailData.subject" required />
+  <div class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+    <div
+        class="bg-white dark:bg-gray-800 shadow-xl rounded-lg w-3/4 max-w-4xl p-8 relative transform transition-all scale-95"
+    >
+      <button
+          @click="close"
+          class="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded"
+      >
+        X
+      </button>
+      <h2 class="text-2xl font-bold mb-4 text-blue-600 dark:text-blue-300">
+        Generated Reply
+      </h2>
+      <textarea
+          v-model="replyBody"
+          rows="10"
+          class="w-full p-4 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      ></textarea>
+      <div class="flex justify-end gap-4 mt-6">
+        <button
+            @click="generateNewReply"
+            class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg"
+        >
+          Generate New Reply
+        </button>
+        <button
+            @click="send"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg"
+        >
+          Send Reply
+        </button>
       </div>
-
-      <div class="form-group">
-        <label for="body">E-Mail-Inhalt</label>
-        <textarea id="body" v-model="emailData.body" required></textarea>
-      </div>
-
-      <div class="form-group">
-        <label for="sender">Absender</label>
-        <input type="email" id="sender" v-model="emailData.sender" required />
-      </div>
-
-      <button type="submit">Antwort generieren</button>
-    </form>
-
-    <!-- Antwortbereich -->
-    <div v-if="generatedReply" class="response">
-      <h3>Generierte Antwort:</h3>
-      <p><strong>Betreff:</strong> {{ generatedReply.reply_subject }}</p>
-      <p><strong>Antwort:</strong> {{ generatedReply.reply_body }}</p>
     </div>
   </div>
 </template>
 
 <script>
 export default {
+  name: "ReplyPopup",
+  props: {
+    emailId: { type: String, required: true },
+    initialReply: { type: String, required: true },
+  },
   data() {
     return {
-      emailData: {
-        subject: '',
-        body: '',
-        sender: '',
-      },
-      generatedReply: null,
+      replyBody: this.initialReply,
     };
   },
   methods: {
-    async generateReply(emailId) {
+    async generateNewReply() {
       try {
-        const response = await fetch("http://localhost:3000/api/email/manual-reply", {
+        const response = await fetch("/api/email/manual-reply", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ emailId }),
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({emailId: this.emailId}),
         });
-
-        if (!response.ok) {
-          throw new Error("Failed to generate reply");
-        }
-
+        if (!response.ok) throw new Error("Failed to generate a new reply");
         const data = await response.json();
-        console.log("API Response:", data); // Debugging: API-Antwort überprüfen
-
-        // Setze die Antwort und öffne das Popup
-        this.popupReply = data.replyBody || ""; // Fallback auf einen leeren String
-        this.selectedEmailId = emailId;
-        this.showPopup = true; // Popup erst jetzt öffnen
+        this.replyBody = data.replyBody;
       } catch (error) {
-        console.error("Error generating reply:", error.message);
-        this.popupReply = ""; // Setze einen leeren String, um den Fehler zu vermeiden
+        console.error("Error generating a new reply:", error.message);
       }
-    }
+    },
+    send() {
+      this.$emit("send", this.replyBody);
+    },
+    close() {
+      this.$emit("close");
+    },
   },
 };
 </script>
-
-<style scoped>
-.email-form {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-input,
-textarea {
-  width: 100%;
-  padding: 8px;
-  margin-top: 5px;
-}
-
-button {
-  padding: 10px 15px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #45a049;
-}
-
-.response {
-  margin-top: 20px;
-  border-top: 2px solid #ccc;
-  padding-top: 10px;
-}
-</style>

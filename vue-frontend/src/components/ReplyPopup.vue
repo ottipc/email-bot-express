@@ -95,7 +95,8 @@ export default {
   top: 20%;
   left: 50%;
   transform: translate(-50%, -20%);
-  width: 400px;
+  width: 800px;
+  height: 800px;
   background: white;
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -106,6 +107,7 @@ export default {
 
 textarea {
   width: 100%;
+  height: 100%;
   margin-bottom: 10px;
   padding: 10px;
   font-size: 14px;

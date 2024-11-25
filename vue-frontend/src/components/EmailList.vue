@@ -1,35 +1,76 @@
 <template>
-  <div class="email-list">
-    <h1>Email List</h1>
-
-    <!-- Listener Toggle -->
-    <button @click="toggleListener">
-      {{ isListenerActive ? "Disable Listener" : "Enable Listener" }}
-    </button>
-
-    <hr />
-
-    <!-- List of Emails -->
-    <div v-for="email in emails" :key="email._id" class="email-item">
-      <h3>{{ email.subject }}</h3>
-      <p><strong>From:</strong> {{ email.sender }}</p>
-      <p><strong>Body:</strong> {{ email.body }}</p>
-
-      <!-- Antwort anzeigen, falls vorhanden -->
-      <div v-if="email.replyBody">
-        <h4>Reply:</h4>
-        <p>{{ email.replyBody }}</p>
-      </div>
-
-      <!-- Button, falls keine Antwort vorhanden ist -->
-      <button v-if="!email.replyBody" @click="generateReply(email._id)">
-        Generate Reply
+  <div :class="['email-list min-h-screen p-6', darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-900']">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-extrabold">📧 Email List</h1>
+      <!-- Dark Mode Toggle -->
+      <button
+          @click="toggleDarkMode"
+          class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded transition"
+      >
+        {{ darkMode ? 'Light Mode' : 'Dark Mode' }}
       </button>
-
-      <!-- Delete Button -->
-      <button @click="deleteEmail(email._id)">Delete</button>
     </div>
 
+    <!-- Listener Toggle -->
+    <div class="flex justify-center mb-6">
+      <button
+          @click="toggleListener"
+          :class="{
+          'bg-green-500 hover:bg-green-600': !isListenerActive,
+          'bg-red-500 hover:bg-red-600': isListenerActive,
+        }"
+          class="text-white font-semibold py-2 px-6 rounded-md shadow-lg transform transition hover:scale-105 focus:outline-none"
+      >
+        {{ isListenerActive ? "Disable Listener" : "Enable Listener" }}
+      </button>
+    </div>
+
+    <!-- List of Emails -->
+    <div class="space-y-6">
+      <div
+          v-for="email in emails"
+          :key="email._id"
+          class="email-item bg-white dark:bg-gray-800 shadow-xl p-6 rounded-md hover:shadow-2xl transition"
+      >
+        <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200">{{ email.subject }}</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          <strong>From:</strong> {{ email.sender }}
+        </p>
+        <p class="mt-2 text-gray-600 dark:text-gray-300">
+          <strong>Body:</strong> {{ email.body }}
+        </p>
+
+        <!-- Antwort anzeigen, falls vorhanden -->
+        <div
+            v-if="email.replyBody"
+            class="mt-4 p-4 bg-gray-50 dark:bg-gray-700 border rounded-md"
+        >
+          <h4 class="font-semibold text-blue-600 dark:text-blue-300">Reply:</h4>
+          <p>{{ email.replyBody }}</p>
+        </div>
+
+        <!-- Buttons -->
+        <div class="mt-4 flex gap-4">
+          <button
+              v-if="!email.replyBody"
+              @click="generateReply(email._id)"
+              :disabled="isLoading[email._id]"
+              class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md shadow-md transform transition hover:scale-105"
+          >
+            <span v-if="isLoading[email._id]">🔄 Generating...</span>
+            <span v-else>Generate Reply</span>
+          </button>
+
+
+          <button
+              @click="deleteEmail(email._id)"
+              class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md shadow-md transform transition hover:scale-105"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Reply Popup -->
     <reply-popup
@@ -47,198 +88,133 @@ import ReplyPopup from "./ReplyPopup.vue";
 
 export default {
   name: "EmailList",
-  components: {
-    ReplyPopup,
-  },
+  components: { ReplyPopup },
   data() {
     return {
-      emails: [], // List of emails from the server
-      isListenerActive: true, // State of the Listener
-      showPopup: false, // State of the Reply Popup
-      selectedEmailId: null, // ID of the Email being replied to
-      popupReply: "", // Reply text shown in the popup
+      emails: [],
+      isListenerActive: true,
+      showPopup: false,
+      selectedEmailId: null,
+      popupReply: "",
+      darkMode: false,
+      isLoading: {}, // Initialisierung als leeres Objekt
     };
   },
   mounted() {
-    console.log("****** mounted *******")
-    this.fetchEmails(); // Initialer Abruf der E-Mails
-    this.getListenerState(); // Abruf des Listener-Zustands
+    this.fetchEmails();
+    this.getListenerState();
+    this.darkMode = localStorage.getItem("darkMode") === "true";
   },
-
   methods: {
-    // Delete E-Mail and Reply
+    toggleDarkMode() {
+      this.darkMode = !this.darkMode;
+      localStorage.setItem("darkMode", this.darkMode);
+    },
     async deleteEmail(emailId) {
       try {
         const response = await fetch(`http://localhost:3000/api/email/${emailId}`, {
           method: "DELETE",
         });
-
-        if (!response.ok) {
-          throw new Error("Failed to delete email");
-        }
-
-        console.log("Email deleted successfully.");
-        this.fetchEmails(); // Aktualisiere die Liste der E-Mails
+        if (!response.ok) throw new Error("Failed to delete email");
+        this.fetchEmails();
       } catch (error) {
-        console.error("Error deleting email:", error.message);
+        console.error(error.message);
       }
     },
-
     async getListenerState() {
-      console.log("GET listener state (EmailList.vue)");
       try {
-        console.log("Scheisse in  (EmailList.vue)");
         const response = await fetch("http://localhost:3000/api/listener/state");
-        console.log("response of listener (EmailList.vue) : " + JSON.stringify(response));
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch listener state (EmailList.vue)");
-        }
+        if (!response.ok) throw new Error("Failed to fetch listener state");
         const data = await response.json();
-        console.log("Listener State fetched (EmailList.vue):", data.value);
-        this.isListenerActive = data.value; // Synchronisiere den Zustand
+        this.isListenerActive = data.value;
       } catch (error) {
-        console.error("Error fetching listener state (EmailList.vue):", error.message);
+        console.error(error.message);
       }
     },
-
     async toggleListener() {
+      const newState = !this.isListenerActive;
       try {
-        const newState = !this.isListenerActive;
-        console.log("Toggle Listener to (EmailList.vue) : " + newState)
         const response = await fetch("http://localhost:3000/api/listener/toggle", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ value: newState }),
         });
-
-        if (!response.ok) {
-          throw new Error("Failed to toggle listener");
-        }
-
-        this.isListenerActive = newState; // Lokaler Zustand aktualisieren
-        console.log(`Listener ${newState ? "enabled" : "disabled"} successfully.`);
+        if (!response.ok) throw new Error("Failed to toggle listener");
+        this.isListenerActive = newState;
       } catch (error) {
-        console.error("Error toggling listener:", error.message);
+        console.error(error.message);
       }
     },
-
-    // Fetch Emails from the Server
     async fetchEmails() {
       try {
         const response = await fetch("http://localhost:3000/api/email/emails");
-        if (!response.ok) {
-          throw new Error("Failed to fetch emails");
-        }
+        if (!response.ok) throw new Error("Failed to fetch emails");
         const data = await response.json();
-        this.emails = data.data; // E-Mails in der Liste speichern
+        this.emails = data.data;
       } catch (error) {
-        console.error("Error fetching emails:", error.message);
+        console.error(error.message);
       }
     },
-
-    // Generate a Reply for a Specific Email
     async generateReply(emailId) {
+      this.isLoading[emailId] = true; // Aktiviert das Loading-Symbol
       try {
         const response = await fetch("http://localhost:3000/api/email/manual-reply", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ emailId }),
         });
-
-        if (!response.ok) {
-          throw new Error("Failed to generate reply");
-        }
+        if (!response.ok) throw new Error("Failed to generate reply");
 
         const data = await response.json();
-        console.log("API Response:", data); // Debugging
-
-        if (!data.replyBody) {
-          console.error("Reply body is undefined.");
-          alert("Could not generate a reply. Please try again.");
-          return;
-        }
-
-        // Setze popupReply und öffne das Popup erst danach
-        this.popupReply = data.replyBody; // Antwort setzen
-        this.selectedEmailId = emailId;  // E-Mail-ID setzen
-        this.showPopup = true;           // Popup öffnen
+        this.popupReply = data.replyBody;
+        this.selectedEmailId = emailId;
+        this.showPopup = true;
       } catch (error) {
         console.error("Error generating reply:", error.message);
-        alert("An error occurred while generating the reply. Please try again.");
-        this.popupReply = ""; // Fallback, um leeres Popup zu vermeiden
+      } finally {
+        this.isLoading[emailId] = false; // Deaktiviert das Loading-Symbol
       }
     },
 
-
-    // Close the Popup
     closePopup() {
       this.showPopup = false;
       this.selectedEmailId = null;
       this.popupReply = "";
     },
-
-    // Send the Generated Reply
     async sendReply(replyBody) {
       try {
         const response = await fetch("http://localhost:3000/api/email/send-reply", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             emailId: this.selectedEmailId,
             replyBody,
           }),
         });
-
-        if (!response.ok) {
-          throw new Error("Failed to send reply");
-        }
-
-        console.log("Reply sent successfully.");
-        alert("Reply sent successfully.")
-        this.fetchEmails(); // Refresh Email List
-        this.closePopup(); // Close the Popup
+        if (!response.ok) throw new Error("Failed to send reply");
+        this.fetchEmails();
+        this.closePopup();
       } catch (error) {
-        console.error("Error sending reply:", error.message);
+        console.error(error.message);
       }
     },
   },
-
 };
 </script>
 
 <style scoped>
-.email-list {
-  padding: 20px;
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.email-item {
-  border: 1px solid #ccc;
-  padding: 10px;
-  margin-bottom: 10px;
-}
-
-button {
-  margin: 10px 0;
-  padding: 8px 12px;
-  cursor: pointer;
-}
-
-.reply-popup {
-  position: fixed;
-  top: 20%;
-  left: 50%;
-  transform: translate(-50%, -20%);
-  width: 400px;
-  background: white;
-  border: 1px solid #ccc;
-  padding: 20px;
-  z-index: 1000;
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out;
 }
 </style>
