@@ -1,9 +1,64 @@
 const Imap = require("imap");
-const { simpleParser } = require("mailparser");
-const { generateEmailReply } = require("../controllers/emailController");
+const {simpleParser} = require("mailparser");
+const {generateEmailReply} = require("../controllers/emailController");
 const sendEmail = require("../services/sendEmail");
 require("dotenv").config(); // Loading Environment from .env-Datei
 const processedEmails = new Set(); // Speichert IDs verarbeiteter E-Mails
+//const Listener = require("../models/listenerModel");
+const Config = require("../models/configModel"); // Stelle sicher, dass der Pfad korrekt ist
+
+let isListenerActive = process.env.LISTENER_ACTIVE === "true"; // Load from env
+
+// Lade den Listener-Zustand aus der Datenbank
+async function loadListenerState() {
+    try {
+        const config = await Config.findOne({ key: "isListenerActive" });
+        console.log(`config in load listener state (emailListener.js) : ` + config);
+        console.log(`value in load listener state (emailListener.js) : ` + config.value);
+
+        //config.value = undefined;
+
+        if (config) {
+            isListenerActive = config.value; // Lade den gespeicherten Zustand
+            console.log(`Listener state loaded from DB (emailListener.js): ` + config.value);
+            return isListenerActive;
+        } else {
+            // Falls der Zustand nicht existiert, speichere den Standardwert
+            await Config.create({ key: "isListenerActive", value: isListenerActive });
+            console.log("Default listener state saved to DB.");
+            return isListenerActive;
+        }
+    } catch (error) {
+        console.error("Error loading listener state from DB:", error.message);
+    }
+}
+
+// Speichere den Listener-Zustand in der Datenbank
+async function saveListenerState(state) {
+    try {
+        console.log("In save listener state (emailListener.js) : " + state);
+        await Config.findOneAndUpdate(
+            { key: "isListenerActive" },
+            { value: state },
+            { upsert: true } // Erstellen, falls der Zustand noch nicht existiert
+        );
+        console.log(`Listener state saved to DB: ${state}`);
+    } catch (error) {
+        console.error("Error saving listener state to DB:", error.message);
+    }
+}
+
+// Umschalten des Listener-Zustands
+function toggleListener(state) {
+    isListenerActive = state; // Aktualisiere den lokalen Zustand
+    saveListenerState(state); // Speichere den Zustand in der Datenbank
+    console.log(`Listener is now ${state ? "active" : "inactive"}`);
+}
+
+// Gib den aktuellen Zustand zurück
+function getListenerState() {
+    return isListenerActive;
+}
 
 
 // config IMAP-Connection
@@ -13,7 +68,7 @@ const imap = new Imap({
     host: process.env.IMAP_SERVER,
     port: 993,
     tls: true,
-    tlsOptions: { rejectUnauthorized: false }, // Nur im Entwicklungsmodus!
+    tlsOptions: {rejectUnauthorized: false}, // Nur im Entwicklungsmodus!
 });
 
 // Queue and State
@@ -40,6 +95,7 @@ async function processQueue() {
             subject: emailData.subject,
             body: emailData.body,
             sender: emailData.sender,
+            saveToDB: true, // Signalisiert dem Controller, dass die Antwort gespeichert werden soll
         },
     };
 
@@ -92,64 +148,80 @@ imap.once("ready", () => {
     });
 });
 
+
 async function fetchNewEmails() {
     imap.search(["UNSEEN"], (err, results) => {
         if (err) {
-            console.error("Fehler beim Abrufen neuer E-Mails:", err);
+            console.error("Error fetching new emails:", err);
             return;
         }
 
         if (!results || results.length === 0) {
-            console.log("Keine neuen ungelesenen E-Mails gefunden.");
+            console.log("No new unread emails found.");
             return;
         }
 
-        const fetch = imap.fetch(results, { bodies: "" , markSeen: true});  //fetch new Emails and mark as seen
+        const fetch = imap.fetch(results, {bodies: "", markSeen: true});
 
         fetch.on("message", (msg) => {
             msg.on("body", async (stream) => {
                 const parsedEmail = await simpleParser(stream);
 
-                //check if email is processed
-                const emailId = parsedEmail.messageId; // Eindeutige Kennung der E-Mail
-                if (processedEmails.has(emailId)) {
-                    console.log("E-Mail bereits verarbeitet:", emailId);
-                    return; // Überspringe verarbeitete E-Mails
-                }
-
-                processedEmails.add(emailId); // Markiere die E-Mail als verarbeitet
-
-                console.debug("New E-Mail:", {
+                console.debug("New email:", {
                     from: parsedEmail.from.text,
                     subject: parsedEmail.subject,
                     text: parsedEmail.text,
                 });
 
-                // Füge die E-Mail-Daten zur Queue hinzu
-                emailQueue.push({
-                    subject: parsedEmail.subject,
-                    body: parsedEmail.text,
-                    sender: parsedEmail.from.value[0].address,
-                });
+                // Simulate Request to the Controller
+                const fakeReq = {
+                    body: {
+                        subject: parsedEmail.subject,
+                        body: parsedEmail.text,
+                        sender: parsedEmail.from.value[0].address,
+                        saveToDB: true, // Immer speichern, egal ob Listener aktiv oder nicht
+                        generateReply: isListenerActive, // Generiere Antwort nur, wenn Listener aktiv ist
+                    },
+                };
 
-                processQueue(); // Starte die Verarbeitung, falls noch nicht gestartet
+                const fakeRes = {
+                    status: (code) => ({
+                        json: (data) => {
+                            console.log(`Controller response (status ${code}):`, data);
+                            return fakeRes;
+                        },
+                    }),
+                };
+
+                try {
+                    await generateEmailReply(fakeReq, fakeRes, console.error);
+                    console.log("Email saved to database successfully.");
+                } catch (error) {
+                    console.error("Error processing email:", error.message);
+                }
             });
         });
 
         fetch.once("end", () => {
-            console.log("Alle neuen E-Mails verarbeitet.");
+            console.log("All new emails processed.");
         });
     });
 }
 
+
 // Fehlerbehandlung
 imap.once("error", (err) => {
-    console.error("IMAP Fehler:", err);
+    console.error("IMAP Error:", err);
 });
 
 imap.once("end", () => {
-    console.log("IMAP Verbindung beendet.");
+    console.log("IMAP Connection end.");
 });
 
-// Verbindung starten
-imap.connect();
+// Start connection
+(async () => {
+    await loadListenerState(); // Zustand laden
+    imap.connect(); // Verbindung starten
+})();
+
+module.exports = {toggleListener, loadListenerState, isListenerActive, fetchNewEmails};
