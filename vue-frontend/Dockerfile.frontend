@@ -1,0 +1,22 @@
+FROM node:18
+
+# Benutzer und Gruppe erstellen
+RUN groupadd -r express-bot && useradd -r -g express-bot express-bot
+
+# Arbeitsverzeichnis setzen
+WORKDIR .
+
+# Dateien kopieren (korrekt auf Benutzer und Gruppe express-bot setzen)
+COPY --chown=express-bot:express-bot . .
+
+# Benutzer wechseln
+USER express-bot
+
+# Abhängigkeiten installieren
+RUN npm install
+
+# Port exponieren
+EXPOSE 8080
+
+# Startbefehl
+CMD ["npm", "run", "serve"]
