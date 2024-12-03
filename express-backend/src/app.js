@@ -17,6 +17,63 @@ app.use(cors());
 const { loadListenerState } = require("./listener/emaiListener");
 const {connect} = require("mongoose");
 
+const MongoClient = require("mongodb").MongoClient;
+
+async function initDatabase() {
+    const uri = process.env.MONGODB_URI || "mongodb://admin:securepassword@database:27017/email-bot-express";
+    const client = new MongoClient(uri);
+
+    try {
+        await client.connect();
+        const db = client.db("email-bot-express");
+
+        // Insert default prompt if not exists
+        const prompts = db.collection("prompts");
+        if (!(await prompts.findOne({ type: "default" }))) {
+            await prompts.insertOne({
+                type: "default",
+                value: 'You are a professional email assistant. Your job is to:\n' +
+                    '-Analyze the following email and understand the context and the request.\n' +
+                    '-The Response has to be in the same language as the original Email.\n' +
+                    '-The Greeting at the end has to be in the same language as the original Email\n' +
+                    '-Write a professional response that addresses the request precisely, friendly and individually.\n' +
+                    'The response must not give any indication that it was automatically generated.\n' +
+                    '- Automatically adapt the salutation to the name and polite form of the original email\n' +
+                    "(e.g. 'Dear Mr. [Name]', 'Dear Ms. [Name]' or 'Hello [First Name]', depending on the tone of the original email).\n" +
+                    '-Do not insert any Name after the greeting, because the Name is in the signature but insert a comma after the greeting at the end! That is important\n' +
+                    "- If no name is given, start with 'Good day'(of course in original language of the original email, this is very important!).\n" +
+                    '- Nothing may be changed or omitted from the signature. Use exactly the following signature (only the language have to be adjusted):',
+                signature: 'Ottavio Braun\nSenior Dev Guy, PM\nKaiser-Friedrich-Straße 8\n10535 Berlin'
+
+            });
+        }
+
+        // Insert default listener if not exists
+        const listeners = db.collection("listeners");
+        if (!(await listeners.findOne({ name: "default-listener" }))) {
+            await listeners.insertOne({
+                name: "default-listener",
+                description: "Respond automatically",
+                isActive: false
+            });
+        }
+
+        // Insert default signature if not exists
+        const configs = db.collection("configs");
+        if (!(await configs.findOne({ name: "default-signature" }))) {
+            await configs.insertOne({
+                name: "default-listener",
+                key: "isListenerActive",
+                value: false
+            });
+        }
+    } finally {
+        await client.close();
+    }
+}
+
+initDatabase().catch(console.error);
+
 
 
 //Database Connection
