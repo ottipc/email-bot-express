@@ -1,95 +1,106 @@
 <template>
-  <div :class="['email-list min-h-screen p-6', darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-900']">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-extrabold">📧 Email List</h1>
-      <!-- Dark Mode Toggle -->
-      <button
-          @click="toggleDarkMode"
-          class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded transition"
-      >
-        {{ darkMode ? 'Light Mode' : 'Dark Mode' }}
-      </button>
-    </div>
+  <div v-if="isAuthenticated" class="email-list min-h-screen p-6 bg-gray-100">
+    <div :class="['email-list min-h-screen p-6', darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-900']">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-extrabold">📧 Email List</h1>
+        <!-- Dark Mode Toggle -->
+        <button
+            @click="toggleDarkMode"
+            class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded transition"
+        >
+          {{ darkMode ? 'Light Mode' : 'Dark Mode' }}
+        </button>
+        <div class="flex justify-between items-center mb-4">
+          <!-- Link zum PromptEditor -->
+          <router-link
+              to="/edit-prompt"
+              class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg"
+          >
+            Go to Prompt Editor
+          </router-link>
+        </div>
+      </div>
 
-    <!-- Listener Toggle -->
-    <div class="flex justify-center mb-6">
-      <button
-          @click="toggleListener"
-          :class="{
+      <!-- Listener Toggle -->
+      <div class="flex justify-center mb-6">
+        <button
+            @click="toggleListener"
+            :class="{
           'bg-green-500 hover:bg-green-600': !isListenerActive,
           'bg-red-500 hover:bg-red-600': isListenerActive,
         }"
-          class="text-white font-semibold py-2 px-6 rounded-md shadow-lg transform transition hover:scale-105 focus:outline-none"
-      >
-        {{ isListenerActive ? "Disable Listener" : "Enable Listener" }}
-      </button>
-    </div>
-
-    <!-- List of Emails -->
-    <div class="space-y-6">
-      <div
-          v-for="email in emails"
-          :key="email._id"
-          class="email-item bg-white dark:bg-gray-800 shadow-xl p-6 rounded-md hover:shadow-2xl transition"
-      >
-        <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200">{{ email.subject }}</h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-          <strong>From:</strong> {{ email.sender }}
-        </p>
-        <div class="mt-2 text-gray-600 dark:text-gray-300">
-          <strong>Body:</strong>
-          <p class="whitespace-pre-wrap">{{ email.body }}</p>
-        </div>
-
-        <!-- Antwort anzeigen, falls vorhanden -->
-        <div
-            v-if="email.replyBody"
-            class="mt-4 p-4 bg-gray-50 dark:bg-gray-700 border rounded-md"
+            class="text-white font-semibold py-2 px-6 rounded-md shadow-lg transform transition hover:scale-105 focus:outline-none"
         >
-          <h4 class="font-semibold text-blue-600 dark:text-blue-300">Reply:</h4>
-          <p class="whitespace-pre-wrap">{{ email.replyBody }}</p>
-        </div>
+          {{ isListenerActive ? "Disable Listener" : "Enable Listener" }}
+        </button>
+      </div>
 
-        <!-- Buttons -->
-        <div class="mt-4 flex gap-4">
-          <button
-              v-if="!email.replyBody"
-              @click="generateReply(email._id)"
-              :disabled="isLoading[email._id]"
-              class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md shadow-md transform transition hover:scale-105"
+      <!-- List of Emails -->
+      <div class="space-y-6">
+        <div
+            v-for="email in emails"
+            :key="email._id"
+            class="email-item bg-white dark:bg-gray-800 shadow-xl p-6 rounded-md hover:shadow-2xl transition"
+        >
+          <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200">{{ email.subject }}</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            <strong>From:</strong> {{ email.sender }}
+          </p>
+          <div class="mt-2 text-gray-600 dark:text-gray-300">
+            <strong>Body:</strong>
+            <p class="whitespace-pre-wrap">{{ email.body }}</p>
+          </div>
+
+          <!-- Antwort anzeigen, falls vorhanden -->
+          <div
+              v-if="email.replyBody"
+              class="mt-4 p-4 bg-gray-50 dark:bg-gray-700 border rounded-md"
           >
-            <span v-if="isLoading[email._id]">🔄 Generating...</span>
-            <span v-else>Generate Reply</span>
-          </button>
+            <h4 class="font-semibold text-blue-600 dark:text-blue-300">Reply:</h4>
+            <p class="whitespace-pre-wrap">{{ email.replyBody }}</p>
+          </div>
+
+          <!-- Buttons -->
+          <div class="mt-4 flex gap-4">
+            <button
+                v-if="!email.replyBody"
+                @click="generateReply(email._id)"
+                :disabled="isLoading[email._id]"
+                class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md shadow-md transform transition hover:scale-105"
+            >
+              <span v-if="isLoading[email._id]">🔄 Generating...</span>
+              <span v-else>Generate Reply</span>
+            </button>
 
 
-          <button
-              @click="deleteEmail(email._id)"
-              class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md shadow-md transform transition hover:scale-105"
-          >
-            Delete
-          </button>
+            <button
+                @click="deleteEmail(email._id)"
+                class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md shadow-md transform transition hover:scale-105"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Reply Popup -->
-    <reply-popup
-        v-if="showPopup"
-        :email-id="selectedEmailId"
-        :initial-reply="popupReply"
-        @close="closePopup"
-        @send="sendReply"
-    />
+      <!-- Reply Popup -->
+      <reply-popup
+          v-if="showPopup"
+          :email-id="selectedEmailId"
+          :initial-reply="popupReply"
+          @close="closePopup"
+          @send="sendReply"
+      />
+    </div>
   </div>
 </template>
 
 <script>
 import ReplyPopup from "./ReplyPopup.vue";
-
+import { mapGetters } from "vuex";
 export default {
   name: "EmailList",
-  components: { ReplyPopup },
+  components: {ReplyPopup},
   data() {
     return {
       emails: [],
@@ -101,7 +112,21 @@ export default {
       isLoading: {}, // Initialisierung als leeres Objekt
     };
   },
+  computed: {
+    ...mapGetters(["isAuthenticated"]), // Vuex-Getter korrekt einbinden
+  },
+  watch: {
+    // Überwache Änderungen in der Authentifizierung
+    isAuthenticated(newValue) {
+      if (!newValue) {
+        this.$router.push("/"); // Weiterleitung zur Login-Seite
+      }
+    },
+  },
   mounted() {
+    if (!this.isAuthenticated) {
+      this.$router.push("/");
+    }
     this.fetchEmails();
     this.getListenerState();
     this.darkMode = localStorage.getItem("darkMode") === "true";
@@ -138,8 +163,8 @@ export default {
       try {
         const response = await fetch("http://localhost:3000/api/listener/toggle", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ value: newState }),
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({value: newState}),
         });
         if (!response.ok) throw new Error("Failed to toggle listener");
         this.isListenerActive = newState;
@@ -162,8 +187,8 @@ export default {
       try {
         const response = await fetch("http://localhost:3000/api/email/manual-reply", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ emailId }),
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({emailId}),
         });
         if (!response.ok) throw new Error("Failed to generate reply");
 
@@ -187,7 +212,7 @@ export default {
       try {
         const response = await fetch("http://localhost:3000/api/email/send-reply", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {"Content-Type": "application/json"},
           body: JSON.stringify({
             emailId: this.selectedEmailId,
             replyBody,

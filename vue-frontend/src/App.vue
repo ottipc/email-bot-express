@@ -1,16 +1,21 @@
 <template>
   <div id="app">
-    <NavBar /> <!-- Globale Navigationsleiste -->
-    <router-view /> <!-- Bereich für dynamische Komponenten -->
+    <nav>
+      <button @click="logout" v-if="isAuthenticated">Logout</button>
+    </nav>
+    <router-view />
   </div>
 </template>
 
 <script>
-import NavBar from '@/components/NavBar.vue'; // NavBar importieren
+import { mapGetters, mapActions } from 'vuex';
 
 export default {
-  components: {
-    NavBar,
+  computed: {
+    ...mapGetters(['isAuthenticated']),
+  },
+  methods: {
+    ...mapActions(['logout']),
   },
 };
 </script>

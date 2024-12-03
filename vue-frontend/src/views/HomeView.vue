@@ -1,33 +1,21 @@
 <template>
-  <div class="home min-h-screen p-6 bg-gray-100 text-center">
-    <h1 class="text-3xl font-extrabold mb-6">Welcome to the Email Assistant</h1>
-    <div class="flex justify-center space-x-4">
-      <!-- Navigation zur Email-Liste -->
-      <router-link
-          to="/emails"
-          class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-6 rounded-md"
-      >
-        Go to Email List
-      </router-link>
-      <!-- Navigation zum Prompt-Editor -->
-      <router-link
-          to="/edit-prompt"
-          class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-6 rounded-md"
-      >
-        Edit Prompt
-      </router-link>
-    </div>
+  <div>
+    <h1>Welcome to the Dashboard</h1>
+    <p>This is a protected page. Only logged-in users can access it.</p>
+    <button @click="logout">Logout</button>
   </div>
 </template>
 
 <script>
+import { mapActions } from 'vuex';
+
 export default {
-  name: "HomeView",
+  methods: {
+    ...mapActions(['logout']),
+    handleLogout() {
+      this.logout();
+      this.$router.push('/login'); // Leite nach dem Logout auf die Login-Seite um
+    },
+  },
 };
 </script>
-
-<style scoped>
-.home {
-  text-align: center;
-}
-</style>

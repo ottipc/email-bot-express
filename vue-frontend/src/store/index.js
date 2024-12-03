@@ -1,23 +1,30 @@
-import Vue from 'vue';
-import Vuex from 'vuex';
+import { createStore } from "vuex";
 
-Vue.use(Vuex);
-
-export default new Vuex.Store({
+const store = createStore({
     state: {
-        message: '',
+        token: localStorage.getItem("token") || null, // Speichert den JWT-Token
+    },
+    getters: {
+        isAuthenticated: (state) => !!state.token, // Überprüft, ob der Benutzer eingeloggt ist
     },
     mutations: {
-        setMessage(state, message) {
-            state.message = message;
+        SET_TOKEN(state, token) {
+            state.token = token;
+            localStorage.setItem("token", token);
+        },
+        CLEAR_TOKEN(state) {
+            state.token = null;
+            localStorage.removeItem("token");
         },
     },
     actions: {
-        updateMessage({ commit }, message) {
-            commit('setMessage', message);
+        login({ commit }, token) {
+            commit("SET_TOKEN", token);
+        },
+        logout({ commit }) {
+            commit("CLEAR_TOKEN");
         },
     },
-    getters: {
-        message: (state) => state.message,
-    },
 });
+
+export default store;
