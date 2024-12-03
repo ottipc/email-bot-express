@@ -34,7 +34,7 @@ Ensure you have the following installed:
    cd email-bot-express
    cd express-backend
 
-**Test Aufruf:**
+**Test Call
 
 ```
 curl -X POST http://localhost:3000/api/generate-email-reply \
@@ -45,20 +45,20 @@ curl -X POST http://localhost:3000/api/generate-email-reply \
     "sender": "john.doe@example.com"
 }'
 ```
-
-
-
 **Getting all Emails**
 ```
 curl -X GET  http://localhost:3000/api/emails
 ```
-
-
 **Deleting Email:**
 ```
 http://localhost:3000/api/email/6741c8b2a12489e914592bc2
 ```
-
+**Saving Prompt and Signature:**
+```
+curl -X POST http://localhost:3000/api/prompt \
+-H "Content-Type: application/json" \
+-d '{"prompt":"New Prompt","signature":"New Signature"}'
+```
 
 **Backend .env:**
 ```

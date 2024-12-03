@@ -19,7 +19,6 @@ const {connect} = require("mongoose");
 
 
 
-
 //Database Connection
 connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log("Connected to MongoDB"))

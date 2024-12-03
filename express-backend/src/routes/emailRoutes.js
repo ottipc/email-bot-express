@@ -7,6 +7,8 @@ const emailController = require('../controllers/emailController');
 const mongoose = require("mongoose");
 const { toggleListener, isListenerActive} = require("../listener/emaiListener");
 const { loadListenerState } = require("../listener/emaiListener");
+const {getPrompt, updatePrompt} = require("../services/promptService");
+const Prompt = require("../models/PromptModel");
 
 console.log(validateEmailInput);    // Should output a function
 console.log(validationMiddleware); // Should output a function
@@ -60,4 +62,43 @@ router.post("/listener/toggle", async (req, res) => {
         res.status(500).json({ success: false, message: "Could not toggle listener state" });
     }
 });
+
+// Prompt und Signatur abrufen
+router.get("/prompt", async (req, res) => {
+    try {
+        const prompt = await Prompt.findOne();
+        if (!prompt) {
+            return res.status(404).json({ error: "Prompt not found." });
+        }
+        res.json({ prompt: prompt.value, signature: prompt.signature });
+    } catch (error) {
+        console.error("Error fetching prompt and signature:", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+// Prompt und Signatur speichern oder aktualisieren
+router.post("/prompt", async (req, res) => {
+    try {
+        const { prompt, signature } = req.body;
+        if (!prompt) {
+            return res.status(400).json({ error: "Prompt is required." });
+        }
+
+        let existingPrompt = await Prompt.findOne();
+        if (!existingPrompt) {
+            existingPrompt = new Prompt({ value: prompt, signature }); // Neuer Eintrag
+        } else {
+            existingPrompt.value = prompt;
+            existingPrompt.signature = signature || existingPrompt.signature; // Aktualisiere nur, wenn Signatur vorhanden
+        }
+
+        await existingPrompt.save();
+        res.json({ message: "Prompt and signature updated successfully." });
+    } catch (error) {
+        console.error("Error updating prompt and signature:", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
 module.exports = router;

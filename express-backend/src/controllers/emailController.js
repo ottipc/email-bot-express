@@ -1,8 +1,9 @@
 const Email = require('../models/emailModel');
 const { generateChatGPTReply } = require('../services/openaiService');
 const { sendMail } = require('../services/sendEmail');
-
-
+const { createPrompt, getPrompt, updatePrompt } = require('../services/promptService');
+const Prompt = require("../models/PromptModel");
+const sendEmail = require("../services/sendEmail");
 const getEmails = async (req, res) => {
     try {
         console.log("Fetching emails from database...");
@@ -49,12 +50,17 @@ const deleteEmail = async (req, res) => {
 const generateEmailReply = async (req, res, next) => {
     try {
         const { subject, body, sender, saveToDB, generateReply } = req.body;
-
+        // Fetch the prompt and signature from the database
+        const promptData = await Prompt.findOne();
+        if (!promptData) {
+            return res.status(404).json({ error: "Prompt and signature not found in the database." });
+        }
         let replyBody = null;
 
         // Generiere nur eine Antwort, wenn `generateReply` true ist
         if (generateReply) {
-            const gptprompt = `${process.env.GPT_PROMPT}\n\n${process.env.EMAIL_SIGNATURE}\n\n` + `Original Mail:\n\n`;
+            // Construct the GPT prompt
+            const gptprompt = `${promptData.value}\n\n${promptData.signature}\n\nOriginal Mail:\n\n`;
             replyBody = await generateChatGPTReply(gptprompt, subject, body);
         }
 
@@ -86,6 +92,10 @@ const generateEmailReply = async (req, res, next) => {
 const generateManualReply = async (req, res, next) => {
     try {
         const { emailId } = req.body;
+        const promptData = await Prompt.findOne();
+        if (!promptData) {
+            return res.status(404).json({ error: "Prompt and signature not found in the database. generateManualReply (emailController.js)" });
+        }
 
         // Hole die Original-Mail aus der Datenbank
         const email = await Email.findById(emailId);
@@ -93,7 +103,7 @@ const generateManualReply = async (req, res, next) => {
             return res.status(404).json({ success: false, message: "Email not found" });
         }
 
-        const gptprompt = `${process.env.GPT_PROMPT}\n\n${process.env.EMAIL_SIGNATURE}\n\n` + `Original Mail:\n\n`;
+        const gptprompt = `${promptData.value}\n\n${promptData.signature}\n\nOriginal Mail:\n\n`;
         console.log("Sending to ChatGPT Email : \n + gptprompt")
         const replyBody = await generateChatGPTReply(gptprompt, email.subject, email.body);
 
@@ -104,6 +114,23 @@ const generateManualReply = async (req, res, next) => {
     }
 };
 
+// Beispiel: Prompt erstellen
+async function createNewPrompt() {
+    const newPrompt = "This is a test prompt.";
+    await createPrompt(newPrompt);
+}
+
+// Beispiel: Prompt abrufen
+async function fetchPrompt() {
+    const prompt = await getPrompt();
+    console.log("Current Prompt:", prompt.value);
+}
+
+// Beispiel: Prompt aktualisieren
+async function modifyPrompt() {
+    const updatedPrompt = "This is the updated prompt.";
+    await updatePrompt(updatedPrompt);
+}
 
 // Sendet eine generierte Antwort und speichert sie
 const sendGeneratedReply = async (req, res, next) => {
