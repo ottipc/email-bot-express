@@ -36,9 +36,10 @@
         <p class="text-sm text-gray-500 dark:text-gray-400">
           <strong>From:</strong> {{ email.sender }}
         </p>
-        <p class="mt-2 text-gray-600 dark:text-gray-300">
-          <strong>Body:</strong> {{ email.body }}
-        </p>
+        <div class="mt-2 text-gray-600 dark:text-gray-300">
+          <strong>Body:</strong>
+          <p class="whitespace-pre-wrap">{{ email.body }}</p>
+        </div>
 
         <!-- Antwort anzeigen, falls vorhanden -->
         <div
@@ -46,7 +47,7 @@
             class="mt-4 p-4 bg-gray-50 dark:bg-gray-700 border rounded-md"
         >
           <h4 class="font-semibold text-blue-600 dark:text-blue-300">Reply:</h4>
-          <p>{{ email.replyBody }}</p>
+          <p class="whitespace-pre-wrap">{{ email.replyBody }}</p>
         </div>
 
         <!-- Buttons -->
@@ -116,6 +117,7 @@ export default {
           method: "DELETE",
         });
         if (!response.ok) throw new Error("Failed to delete email");
+        alert("Email is deleted successfully!")
         this.fetchEmails();
       } catch (error) {
         console.error(error.message);
