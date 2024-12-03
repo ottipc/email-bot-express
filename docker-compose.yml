@@ -1,6 +1,18 @@
 version: '3.8'
 
 services:
+  database:
+    image: mongo:5.0
+    container_name: mongodb
+    ports:
+      - "27018:27017" # Mongo Port auf 27018 ändern, um Konflikte zu vermeiden
+    volumes:
+      - mongodb-data:/data/db
+      #- ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro # Das Skript wird beim Start ausgeführt
+    environment:
+        MONGO_INITDB_ROOT_USERNAME: express-bot
+        MONGO_INITDB_ROOT_PASSWORD: 1VbfpRxD42kP
+
   backend:
     build:
       context: ./express-backend
@@ -9,9 +21,9 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./backend:/app
+      - ./backend:/app:rw
     environment:
-      - MONGODB_URI=mongodb://database:27017/email-bot-express
+      - MONGODB_URI=mongodb://express-bot:1VbfpRxD42kP@database:27017/email-bot-express
     depends_on:
       - database
 
@@ -21,20 +33,10 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: frontend-service
     ports:
-      - "8080:8080"
+      - "8090:8080" # Change Frontend Port to 8090
     volumes:
-      - ./frontend:/app
+      - ./frontend:/app:rw
 
-  database:
-    image: mongo:5.0
-    container_name: mongodb
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb-data:/data/db
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
 
 volumes:
   mongodb-data:
