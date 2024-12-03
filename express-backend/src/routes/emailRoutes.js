@@ -9,7 +9,7 @@ const { toggleListener, isListenerActive} = require("../listener/emaiListener");
 const { loadListenerState } = require("../listener/emaiListener");
 const {getPrompt, updatePrompt} = require("../services/promptService");
 const Prompt = require("../models/PromptModel");
-
+const authMiddleware = require('../middlewares/authMiddleware');
 console.log(validateEmailInput);    // Should output a function
 console.log(validationMiddleware); // Should output a function
 console.log(generateEmailReply);    // Should output a function

@@ -52,6 +52,7 @@ async function initDatabase() {
         const listeners = db.collection("listeners");
         if (!(await listeners.findOne({ name: "default-listener" }))) {
             await listeners.insertOne({
+                type: "default",
                 name: "default-listener",
                 description: "Respond automatically",
                 isActive: false
@@ -60,9 +61,10 @@ async function initDatabase() {
 
         // Insert default signature if not exists
         const configs = db.collection("configs");
-        if (!(await configs.findOne({ name: "default-signature" }))) {
+        if (!(await configs.findOne({ name: "default-config" }))) {
             await configs.insertOne({
-                name: "default-listener",
+                type: "default",
+                name: "default-config",
                 key: "isListenerActive",
                 value: false
             });
