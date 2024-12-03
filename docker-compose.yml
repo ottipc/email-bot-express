@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./express-backend
+      dockerfile: Dockerfile.backend
+    container_name: backend-service
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - MONGODB_URI=mongodb://database:27017/email-bot-express
+    depends_on:
+      - database
+
+  frontend:
+    build:
+      context: ./vue-frontend
+      dockerfile: Dockerfile.frontend
+    container_name: frontend-service
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./frontend:/app
+
+  database:
+    image: mongo:5.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+
+volumes:
+  mongodb-data:
+    external: false
