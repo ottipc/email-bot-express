@@ -5,8 +5,8 @@ const { validateEmailInput, validationMiddleware } = require('../middlewares/val
 const { generateEmailReply } = require('../controllers/emailController');  // Verweise auf den Controller
 const emailController = require('../controllers/emailController');
 const mongoose = require("mongoose");
-const { toggleListener, isListenerActive} = require("../listener/emaiListener");
-const { loadListenerState } = require("../listener/emaiListener");
+const { toggleAutomaticResponse, isLAutomaticResponseActive} = require("../listener/emaiListener");
+const { loadAutomaticResponseState } = require("../listener/emaiListener");
 const {getPrompt, updatePrompt} = require("../services/promptService");
 const Prompt = require("../models/PromptModel");
 const authMiddleware = require('../middlewares/authMiddleware');
@@ -33,37 +33,60 @@ router.post("/email/manual-reply", emailController.generateManualReply);
 router.post("/email/send-reply", emailController.sendGeneratedReply);
 
 // Endpunkt: Listener-Zustand abrufen
-router.get("/listener/state", async (req, res) => {
-    console.debug("In get listener state (emailRoutes.js)");
+router.get("/automaticresponse/state", async (req, res) => {
+    console.debug("In get automaticresponse state (emailRoutes.js)");
     try {
-        console.log("Fetching listener state...");
-        const state = await loadListenerState(); // Hole den aktuellen Zustand
-        console.log("Current listener state (emailRoutes.js):", state);
+        console.log("Fetching automatic response state...");
+        const state = await loadAutomaticResponseState(); // Hole den aktuellen Zustand
+        console.log("Current automatic response (emailRoutes.js):", state);
         res.status(200).json({ success: true, value: state });
     } catch (error) {
-        console.error("Error fetching listener state (emailRoutes.js) :", error.message);
-        res.status(500).json({ success: false, message: "Could not fetch listener state" });
+        console.error("Error fetching automatic response state (emailRoutes.js) :", error.message);
+        res.status(500).json({ success: false, message: "Could not fetch automatic response state" });
     }
 });
 
 // Endpunkt: Listener aktivieren/deaktivieren
-router.post("/listener/toggle", async (req, res) => {
+router.post("/automaticresponse/toggle", async (req, res) => {
     try {
-        console.debug("In toggling listener state (emailRoutes.js)");
+        console.debug("In toggling automaticr esponse state (emailRoutes.js)");
         const { value } = req.body;
-        console.log("state in toggle listener state (emailRoutes.js) : " + value);
-        toggleListener(value); // Aktualisiere den Zustand
+        console.log("state in toggle automaticr esponse state (emailRoutes.js) : " + value);
+        toggleAutomaticResponse(value); // Aktualisiere den Zustand
         res.status(200).json({
             success: true,
-            message: `Listener is now ${value ? "active" : "inactive"}`,
+            message: `Automatic Response is now ${value ? "active" : "inactive"}`,
         });
     } catch (error) {
-        console.error("Error toggling listener state:", error.message);
-        res.status(500).json({ success: false, message: "Could not toggle listener state" });
+        console.error("Error toggling automatic response state:", error.message);
+        res.status(500).json({ success: false, message: "Could not toggle automatic response state" });
     }
 });
 
-// Prompt und Signatur abrufen
+/* @swagger
+* /api/email/prompt:
+*   get:
+*     summary: Toggle the application status
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             properties:
+*               object:
+*                 description: prompt and signature
+*     responses:
+*       200:
+*         description: Fetched Prompt and Signature succesfully
+*         content:
+*           application/json:
+*             schema:
+*               type: object
+*               properties:
+*                 message:
+*                   type: string
+*/
 router.get("/prompt", async (req, res) => {
     try {
         const prompt = await Prompt.findOne();

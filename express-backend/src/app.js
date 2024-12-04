@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(morgan('dev'));
 app.use(helmet());
 app.use(cors());
-const { loadListenerState } = require("./listener/emaiListener");
+const { loadAutomaticResponseState } = require("./listener/emaiListener");
 const {connect} = require("mongoose");
 
 const MongoClient = require("mongodb").MongoClient;
@@ -48,27 +48,27 @@ async function initDatabase() {
             });
         }
 
-        // Insert default listener if not exists
-        const listeners = db.collection("listeners");
-        if (!(await listeners.findOne({ name: "default-listener" }))) {
-            await listeners.insertOne({
+        // Insert default automatic response if not exists
+        const Config = db.collection("configs");
+        if (!(await Config.findOne({ name: "default-configs" }))) {
+            await Config.insertOne({
                 type: "default",
-                name: "default-listener",
-                description: "Respond automatically",
+                name: "default-configs",
+                description: "Config data",
                 isActive: false
             });
         }
 
         // Insert default signature if not exists
-        const configs = db.collection("configs");
+        /*const configs = db.collection("configs");
         if (!(await configs.findOne({ name: "default-config" }))) {
             await configs.insertOne({
                 type: "default",
                 name: "default-config",
-                key: "isListenerActive",
+                key: "isAutomaticResponseActive",
                 value: false
             });
-        }
+        }*/
     } finally {
         await client.close();
     }
@@ -88,9 +88,9 @@ connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: tr
 
 
 
-// Lade den Listener-Zustand aus der Datenbank beim Start
-loadListenerState().then(() => {
-    console.log("Listener state initialized.");
+// Lade den Automatic Response-State from Database at Application Start
+loadAutomaticResponseState().then(() => {
+    console.log("automatic response state initialized.");
 });
 
 // Swagger Docs
