@@ -10,6 +10,7 @@
         >
           {{ darkMode ? 'Light Mode' : 'Dark Mode' }}
         </button>
+
         <div class="flex justify-between items-center mb-4">
           <!-- Link zum PromptEditor -->
           <router-link
@@ -20,20 +21,20 @@
           </router-link>
         </div>
       </div>
-
-      <!-- Listener Toggle -->
+      <!-- Automatic Response Toggle -->
       <div class="flex justify-center mb-6">
         <button
-            @click="toggleListener"
+            @click="toggleAutomaticResponse"
             :class="{
-          'bg-green-500 hover:bg-green-600': !isListenerActive,
-          'bg-red-500 hover:bg-red-600': isListenerActive,
+          'bg-green-500 hover:bg-green-600': !isAutomaticResponseActive,
+          'bg-red-500 hover:bg-red-600': isAutomaticResponseActive,
         }"
             class="text-white font-semibold py-2 px-6 rounded-md shadow-lg transform transition hover:scale-105 focus:outline-none"
         >
-          {{ isListenerActive ? "Disable Listener" : "Enable Listener" }}
+          {{ isAutomaticResponseActive ? "Disable Automatic Response" : "Enable Automatic Response" }}
         </button>
       </div>
+      <application-toggle></application-toggle> <!-- Switch for Listener -->
 
       <!-- List of Emails -->
       <div class="space-y-6">
@@ -97,14 +98,17 @@
 
 <script>
 import ReplyPopup from "./ReplyPopup.vue";
+import ApplicationToggle from "@/components/ApplicationToggle.vue";
 import { mapGetters } from "vuex";
+const API_URL = process.env.VUE_APP_API_BASE_URL
+console.log("API URL in EMAILLIST : "+ API_URL)
 export default {
   name: "EmailList",
-  components: {ReplyPopup},
+  components: {ReplyPopup,ApplicationToggle},
   data() {
     return {
       emails: [],
-      isListenerActive: true,
+      isAutomaticResponseActive: true,
       showPopup: false,
       selectedEmailId: null,
       popupReply: "",
@@ -128,7 +132,7 @@ export default {
       this.$router.push("/");
     }
     this.fetchEmails();
-    this.getListenerState();
+    this.getAutomaticResponseState();
     this.darkMode = localStorage.getItem("darkMode") === "true";
   },
   methods: {
@@ -138,7 +142,7 @@ export default {
     },
     async deleteEmail(emailId) {
       try {
-        const response = await fetch(`http://localhost:3000/api/email/${emailId}`, {
+        const response = await fetch(API_URL +`/api/email/${emailId}`, {
           method: "DELETE",
         });
         if (!response.ok) throw new Error("Failed to delete email");
@@ -148,33 +152,33 @@ export default {
         console.error(error.message);
       }
     },
-    async getListenerState() {
+    async getAutomaticResponseState() {
       try {
-        const response = await fetch("http://localhost:3000/api/listener/state");
-        if (!response.ok) throw new Error("Failed to fetch listener state");
+        const response = await fetch(API_URL + "/api/automaticresponse/state");
+        if (!response.ok) throw new Error("Failed to fetch automatic response state");
         const data = await response.json();
-        this.isListenerActive = data.value;
+        this.isAutomaticResponseActive = data.value;
       } catch (error) {
         console.error(error.message);
       }
     },
-    async toggleListener() {
-      const newState = !this.isListenerActive;
+    async toggleAutomaticResponse() {
+      const newState = !this.isAutomaticResponseActive;
       try {
-        const response = await fetch("http://localhost:3000/api/listener/toggle", {
+        const response = await fetch(API_URL+ "/api/automaticresponse/toggle", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({value: newState}),
         });
-        if (!response.ok) throw new Error("Failed to toggle listener");
-        this.isListenerActive = newState;
+        if (!response.ok) throw new Error("Failed to toggle automatic response");
+        this.isAutomaticResponseActive = newState;
       } catch (error) {
         console.error(error.message);
       }
     },
     async fetchEmails() {
       try {
-        const response = await fetch("http://localhost:3000/api/email/emails");
+        const response = await fetch(API_URL + "/api/email/emails");
         if (!response.ok) throw new Error("Failed to fetch emails");
         const data = await response.json();
         this.emails = data.data;
@@ -185,7 +189,7 @@ export default {
     async generateReply(emailId) {
       this.isLoading[emailId] = true; // Aktiviert das Loading-Symbol
       try {
-        const response = await fetch("http://localhost:3000/api/email/manual-reply", {
+        const response = await fetch(API_URL +"/api/email/manual-reply", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({emailId}),
@@ -210,7 +214,7 @@ export default {
     },
     async sendReply(replyBody) {
       try {
-        const response = await fetch("http://localhost:3000/api/email/send-reply", {
+        const response = await fetch(API_URL + "/api/email/send-reply", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({

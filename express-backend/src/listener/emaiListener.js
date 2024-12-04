@@ -3,65 +3,75 @@ const {simpleParser} = require("mailparser");
 const {generateEmailReply} = require("../controllers/emailController");
 const sendEmail = require("../services/sendEmail");
 require("dotenv").config(); // Loading Environment from .env-Datei
-const processedEmails = new Set(); // Speichert IDs verarbeiteter E-Mails
-//const Listener = require("../models/listenerModel");
-const Config = require("../models/configModel"); // Stelle sicher, dass der Pfad korrekt ist
+const processedEmails = new Set(); // Saving IDs of processed E-Mails
+const Config = require("../models/configModel");
 
-let isListenerActive = process.env.LISTENER_ACTIVE === "true"; // Load from env
+let isAutomaticResponseActive = "true"; //set default Automatic Response to true
 
-// Lade den Listener-Zustand aus der Datenbank
-async function loadListenerState() {
+// Loading the automatic response state out of the database
+async function loadAutomaticResponseState() {
     try {
-        const config = await Config.findOne({ key: "isListenerActive" });
-        console.log(`config in load listener state (emailListener.js) : ` + config);
-        console.log(`value in load listener state (emailListener.js) : ` + config.value);
+        const config = await Config.findOne({ key: "isAutomaticResponseActive" });
+        console.log(`config in load automatic response state (emailListener.js) : ` + config);
+        console.log(`value in load automatic response state (emailListener.js) : ` + config.value);
 
         //config.value = undefined;
 
         if (config) {
-            isListenerActive = config.value; // Lade den gespeicherten Zustand
-            console.log(`Listener state loaded from DB (emailListener.js): ` + config.value);
-            return isListenerActive;
+            isLAutomaticResponseActive = config.value; // loading saved state
+            console.log(`Automatic Response state loaded from DB (emailListener.js): ` + config.value);
+            return isLAutomaticResponseActive;
         } else {
-            // Falls der Zustand nicht existiert, speichere den Standardwert
-            await Config.create({ key: "isListenerActive", value: isListenerActive });
-            console.log("Default listener state saved to DB.");
+            // if state does not exist save the default value
+            await Config.create({ key: "isAutomaticResponseActive", value: isAutomaticResponseActive });
+            console.log("Default automatic response state saved to DB.");
             return isListenerActive;
         }
     } catch (error) {
-        console.error("Error loading listener state from DB:", error.message);
+        console.error("Error loading automatic response state from DB:", error.message);
     }
 }
 
-// Speichere den Listener-Zustand in der Datenbank
-async function saveListenerState(state) {
+/**
+ * Savig automatic Response State in the Database
+ */
+async function saveAutomaticResponseState(state) {
     try {
-        console.log("In save listener state (emailListener.js) : " + state);
+        console.log("In save automatic response state (emailListener.js) : " + state);
         await Config.findOneAndUpdate(
-            { key: "isListenerActive" },
+            { key: "isautomaticResonseActive" },
             { value: state },
-            { upsert: true } // Erstellen, falls der Zustand noch nicht existiert
+            { upsert: true } // Create if state does not exist
         );
-        console.log(`Listener state saved to DB: ${state}`);
+        console.log(`Automatic Response state saved to DB: ${state}`);
     } catch (error) {
-        console.error("Error saving listener state to DB:", error.message);
+        console.error("Error saving Automatic Response state to DB:", error.message);
     }
 }
 
-// Umschalten des Listener-Zustands
-function toggleListener(state) {
-    isListenerActive = state; // Aktualisiere den lokalen Zustand
-    saveListenerState(state); // Speichere den Zustand in der Datenbank
-    console.log(`Listener is now ${state ? "active" : "inactive"}`);
+/**
+ * switching the automatic respoonse state
+ * @param state
+ */
+function toggleAutomaticResponse(state) {
+    isAutomaticResponseActive = state; // setting state of isAutomaticResponseOn
+    saveAutomaticResponseState(state); // save Automatic Response State to Database
+    console.log(`Automatic Response is now ${state ? "active" : "inactive"}`);
 }
 
-// Gib den aktuellen Zustand zurück
-function getListenerState() {
+/**
+ * return the actual automatic Response State
+ * @returns {boolean}
+ */
+function getAutomaticResponseState() {
     return isListenerActive;
 }
 
 
-// config IMAP-Connection
+/**
+ * config IMAP-Connection
+  * @type {Connection}
+ */
 const imap = new Imap({
     user: process.env.EMAIL_USER,
     password: process.env.EMAIL_PASSWORD,
@@ -75,12 +85,18 @@ const imap = new Imap({
 const emailQueue = []; // Warteschlange für E-Mails
 let processing = false; // Status: Wird gerade verarbeitet?
 
-// chose Directory of Emails listen to
+/**
+ * chose Directory of Emails listen to
+ * @param cb
+ */
 function openInbox(cb) {
     imap.openBox("INBOX", false, cb);
 }
 
-// Processing next Email in Queue...
+/**
+ * Processing next Email in Queue...
+ * @returns {Promise<void>}
+ */
 async function processQueue() {
     if (processing || emailQueue.length === 0) return; // If already processed or queue is empty, abort
 
@@ -220,8 +236,8 @@ imap.once("end", () => {
 
 // Start connection
 (async () => {
-    await loadListenerState(); // Zustand laden
+    await loadAutomaticResponseState(); // Zustand laden
     imap.connect(); // Verbindung starten
 })();
 
-module.exports = {toggleListener, loadListenerState, isListenerActive, fetchNewEmails};
+module.exports = {toggleAutomaticResponse, loadAutomaticResponseState, isAutomaticResponseActive, fetchNewEmails};
