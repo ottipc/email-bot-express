@@ -1,6 +1,6 @@
 .env
 node_modules/
 ../express-backend/node_modules
-../express-backend/.env
+../../express-backend/.env.deveopmet
 ../express-backend/.env.test
 .env.test

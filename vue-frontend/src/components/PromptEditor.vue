@@ -46,7 +46,6 @@
 
 <script>
 import { API_BASE_URL } from "@/api"; // Basis-URL importieren
-
 export default {
   data() {
     return {
@@ -61,7 +60,7 @@ export default {
     async loadPromptAndSignature() {
       console.log("In loadPromptAndSignature (PromptEditor.vue)...");
       try {
-        const response = await fetch(`${API_BASE_URL}/api/prompt`);
+        const response = await fetch(API_BASE_URL + "/api/prompt");
         if (!response.ok) {
           throw new Error("Failed to load the prompt and signature.");
         }

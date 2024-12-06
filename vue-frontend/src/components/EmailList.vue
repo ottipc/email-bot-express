@@ -22,7 +22,7 @@
         </div>
       </div>
       <!-- Automatic Response Toggle -->
-      <div class="flex justify-center mb-6">
+      <div class="flex justify-end mb-6">
         <button
             @click="toggleAutomaticResponse"
             :class="{
@@ -34,7 +34,11 @@
           {{ isAutomaticResponseActive ? "Disable Automatic Response" : "Enable Automatic Response" }}
         </button>
       </div>
-      <application-toggle></application-toggle> <!-- Switch for Listener -->
+
+      <!-- Application Toggle -->
+      <div class="flex justify-end mb-6">
+        <application-toggle></application-toggle>
+      </div>
 
       <!-- List of Emails -->
       <div class="space-y-6">

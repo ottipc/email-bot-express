@@ -64,6 +64,8 @@
 </template>
 
 <script>
+const API_URL = process.env.VUE_APP_API_BASE_URL
+import returnReadableStream from "@/utils/utils.js"
 export default {
   data() {
     return {
@@ -81,7 +83,7 @@ export default {
       }
 
       try {
-        const response = await fetch("http://localhost:3000/api/auth/register", {
+        const response = await fetch(API_URL + "/api/auth/register", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -93,10 +95,21 @@ export default {
         });
 
         if (!response.ok) {
-          throw new Error("Registration failed.");
-        }
+          // Antwort lesen und Fehler extrahieren
+          const errorText = await returnReadableStream(response.body);
+          let errorData;
 
-        const data = await response.json();
+          try {
+            errorData = JSON.parse(errorText); // Versuche die Antwort zu parsen
+          } catch (parsingError) {
+            console.error("Failed to parse error response:", parsingError);
+          }
+
+          // Fallback auf "message" oder Textinhalt, falls "error" nicht existiert
+          const errorMessage = errorData?.error || errorData?.message || errorText || "Unknown error occurred";
+          throw new Error(errorMessage);
+        }
+        const data = await response.json(); // Erfolgreiche Antwort
         console.log("Registration successful:", data.message);
         this.$router.push("/"); // Weiterleitung zur Login-Seite
       } catch (error) {

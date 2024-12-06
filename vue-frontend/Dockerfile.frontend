@@ -16,7 +16,7 @@ USER express-bot
 RUN npm install
 
 # Port exponieren
-EXPOSE 8080
+EXPOSE 8090
 
 # Startbefehl
 CMD ["npm", "run", "serve"]

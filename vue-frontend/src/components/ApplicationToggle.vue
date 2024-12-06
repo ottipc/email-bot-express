@@ -24,36 +24,39 @@
 
 <script>
 import {
-  getApplicationStatus,
-  toggleApplicationStatus,
+  getApplicationState,
+  toggleApplicationState,
 } from "@/api/applicationApi";
 
 export default {
   data() {
     return {
-      isEnabled: true, // Standardmäßig aktiviert
+      isEnabled: false, // Standardwert
       message: "",
       error: "",
     };
   },
   async mounted() {
     try {
-      const data = await getApplicationStatus();
-      this.isEnabled = data.enabled;
+      const data = await getApplicationState(); // Abrufen des aktuellen Status
+      this.isEnabled = data.isApplicationEnabled;
     } catch (err) {
-      this.error = "Failed to fetch application status.";
+      this.error = "Failed to fetch application status. Please try again later.";
     }
   },
   methods: {
     async toggleApplication() {
       try {
-        this.isEnabled = !this.isEnabled;
-        const response = await toggleApplicationStatus(this.isEnabled);
+        console.log("Sending toggle request...");
+        const response = await toggleApplicationState(); // Umschalten des Status
+        console.log("API Response:", response);
+        this.isEnabled = response.isApplicationEnabled; // Status aus der API setzen
         this.message = response.message;
         this.error = "";
-        setTimeout(() => (this.message = ""), 3000);
+        setTimeout(() => (this.message = ""), 3000); // Nachricht nach 3 Sekunden entfernen
       } catch (err) {
-        this.error = "Failed to toggle application status.";
+        console.error("Error toggling application status:", err); // Fehler loggen
+        this.error = err.message || "Failed to toggle application status. Please try again.";
         this.message = "";
       }
     },

@@ -52,6 +52,7 @@
 
 <script>
 import { mapGetters, mapActions } from "vuex";
+const API_URL = process.env.VUE_APP_API_BASE_URL
 
 export default {
   data() {
@@ -82,7 +83,7 @@ export default {
     ...mapActions(["login"]), // Vuex-Login-Aktion
     async handleLogin() {
       try {
-        const response = await fetch("http://localhost:3000/api/auth/login", {
+        const response = await fetch(API_URL + "/api/auth/login", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

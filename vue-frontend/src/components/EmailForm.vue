@@ -36,6 +36,8 @@
 </template>
 
 <script>
+const API_URL = process.env.VUE_APP_API_BASE_URL
+
 export default {
   name: "ReplyPopup",
   props: {
@@ -50,7 +52,7 @@ export default {
   methods: {
     async generateNewReply() {
       try {
-        const response = await fetch(API_BASE_URL +"/api/email/manual-reply", {
+        const response = await fetch(API_URL +"/api/email/manual-reply", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({emailId: this.emailId}),
