@@ -10,6 +10,6 @@ module.exports = {
      testTimeout: 10000, // Setze Timeout für Tests
  };
 
-process.env.OPENAI_API_KEY = 'dummy_key_for_testing';
+config.OPENAI_API_KEY = 'dummy_key_for_testing';
 
 

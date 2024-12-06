@@ -2,12 +2,12 @@ const nodemailer = require('nodemailer');
 
 async function sendEmail(to, subject, text) {
     const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_SERVER,
-        port: process.env.SMTP_PORT,
+        host: config.SMTP_SERVER,
+        port: config.SMTP_PORT,
         secure: false,
         auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASSWORD,
+            user: config.EMAIL_USER,
+            pass: config.EMAIL_PASSWORD,
         },
         tls : {
             rejectUnauthorized: false // Allow insecure certificates (optional, for testing only)
@@ -15,7 +15,7 @@ async function sendEmail(to, subject, text) {
     });
 
     const mailOptions = {
-        from: process.env.EMAIL_USER,
+        from: config.EMAIL_USER,
         to,
         subject,
         text,

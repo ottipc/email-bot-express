@@ -9,15 +9,14 @@ const { toggleAutomaticResponse, isLAutomaticResponseActive} = require("../liste
 const { loadAutomaticResponseState } = require("../listener/emaiListener");
 const {getPrompt, updatePrompt} = require("../services/promptService");
 const Prompt = require("../models/PromptModel");
-const authMiddleware = require('../middlewares/authMiddleware');
-console.log(validateEmailInput);    // Should output a function
-console.log(validationMiddleware); // Should output a function
-console.log(generateEmailReply);    // Should output a function
+//const authMiddleware = require('../middlewares/authMiddleware');
+console.log("Loading emailRoutes.js ...");    // Should output a function
+console.log("emailRoutes.js geladen von:", module.parent?.filename || "Loaded directly!");
 
 //Database Connection
 /*
 mongoose
-    .connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .connect(config.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log("Connected to MongoDB"))
     .catch((error) => {
         console.error("Error connecting to MongoDB:", error.message);

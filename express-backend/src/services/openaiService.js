@@ -10,7 +10,7 @@ const generateChatGPTReply = async (gptprompt, subject, body) => {
             max_tokens: 1000
         }, {
             headers: {
-                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                'Authorization': `Bearer ${config.OPENAI_API_KEY}`,
                 'Content-Type': 'application/json'
             }
         });

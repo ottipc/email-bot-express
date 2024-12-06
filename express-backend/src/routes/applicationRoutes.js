@@ -1,11 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const {
-    getApplicationStatus,
-    toggleApplicationStatus,
+    getApplicationState,
+    toggleApplicationState,
+    setApplicationState
 } = require("../controllers/applicationController");
 
 // Endpunkte für den Schalter
+
 /**
  * @swagger
  * /api/application/state:
@@ -19,20 +21,17 @@ const {
  *             schema:
  *               type: object
  *               properties:
- *                 enabled:
+ *                 isApplicationEnabled:
  *                   type: boolean
  *                   description: Whether the application is enabled
  */
-
-router.get("/state", getApplicationStatus);
-
-
+router.get("/state", getApplicationState);
 
 /**
  * @swagger
- * /api/application/toggle:
+ * /api/application/state:
  *   post:
- *     summary: Toggle the application status
+ *     summary: Set the application status
  *     requestBody:
  *       required: true
  *       content:
@@ -40,12 +39,12 @@ router.get("/state", getApplicationStatus);
  *           schema:
  *             type: object
  *             properties:
- *               enabled:
+ *               isApplicationEnabled:
  *                 type: boolean
- *                 description: New application status
+ *                 description: New application state
  *     responses:
  *       200:
- *         description: Application status updated successfully
+ *         description: Application state updated successfully
  *         content:
  *           application/json:
  *             schema:
@@ -53,9 +52,29 @@ router.get("/state", getApplicationStatus);
  *               properties:
  *                 message:
  *                   type: string
+ *                 isApplicationEnabled:
+ *                   type: boolean
  */
-router.post("/toggle", toggleApplicationStatus);
+router.post("/state", setApplicationState);
 
-
+/**
+ * @swagger
+ * /api/application/toggle:
+ *   post:
+ *     summary: Toggle the application status
+ *     responses:
+ *       200:
+ *         description: Application status toggled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 isApplicationEnabled:
+ *                   type: boolean
+ */
+router.post("/toggle", toggleApplicationState);
 
 module.exports = router;

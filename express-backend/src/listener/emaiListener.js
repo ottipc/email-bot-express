@@ -2,12 +2,12 @@ const Imap = require("imap");
 const {simpleParser} = require("mailparser");
 const {generateEmailReply} = require("../controllers/emailController");
 const sendEmail = require("../services/sendEmail");
-require("dotenv").config(); // Loading Environment from .env-Datei
-const processedEmails = new Set(); // Saving IDs of processed E-Mails
+//const processedEmails = new Set(); // Saving IDs of processed E-Mails
 const Config = require("../models/configModel");
 
 let isAutomaticResponseActive = "true"; //set default Automatic Response to true
-
+console.log("Loading emailListener.js...")
+console.log("emailListener.js geladen von:", module.parent?.filename || "Loaded directly!");
 // Loading the automatic response state out of the database
 async function loadAutomaticResponseState() {
     try {
@@ -60,18 +60,10 @@ function toggleAutomaticResponse(state) {
 }
 
 /**
- * return the actual automatic Response State
- * @returns {boolean}
- */
-function getAutomaticResponseState() {
-    return isListenerActive;
-}
-
-
-/**
  * config IMAP-Connection
   * @type {Connection}
  */
+console.log("Connection in emailListener : " + process.env.IMAP_SERVER)
 const imap = new Imap({
     user: process.env.EMAIL_USER,
     password: process.env.EMAIL_PASSWORD,

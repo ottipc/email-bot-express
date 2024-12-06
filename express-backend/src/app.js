@@ -1,4 +1,6 @@
-require('dotenv').config();
+console.log("Loading app.js...")
+const config = require('./loadConfig');
+const dbConfig = require('./models/configModel'); // Pa
 const express = require('express');
 const morgan = require('morgan');
 const helmet = require('helmet');
@@ -9,18 +11,23 @@ const emailRoutes = require('./routes/emailRoutes');
 const errorMiddleware = require('./middlewares/errorMiddleware');
 const app = express();
 //const mongoose = require("mongoose");
-// Middleware
+// Middlewar
 app.use(express.json());
 app.use(morgan('dev'));
 app.use(helmet());
 app.use(cors());
 const { loadAutomaticResponseState } = require("./listener/emaiListener");
 const {connect} = require("mongoose");
-
 const MongoClient = require("mongodb").MongoClient;
 
+
+const mongodbUri = config.MONGODB_URI; // Überprüfe, ob die Variable geladen wird
+if (!mongodbUri) {
+    console.error("MONGODB_URI ist nicht definiert. Überprüfe deine .env-Datei.");
+    process.exit(1);
+}
 async function initDatabase() {
-    const uri = process.env.MONGODB_URI || "mongodb://admin:securepassword@database:27017/email-bot-express";
+    const uri = config.MONGODB_URI || "mongodb://localhost:27017/email-bot-express";
     const client = new MongoClient(uri);
 
     try {
@@ -79,14 +86,51 @@ initDatabase().catch(console.error);
 
 
 //Database Connection
-connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+connect(config.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log("Connected to MongoDB"))
     .catch((error) => {
         console.error("Error connecting to MongoDB:", error.message);
         process.exit(1);
     });
 
+async function initializeApplicationState() {
+    try {
+        // Überprüfe, ob `isApplicationEnabled` existiert
+        const existingConfig = await dbConfig.findOne({ key: 'isApplicationEnabled' });
+        if (!existingConfig) {
+            // Falls nicht vorhanden, erstelle den Eintrag mit dem Standardwert
+            await dbConfig.create({ key: 'isApplicationEnabled', value: false }); // Standardwert: false
+            console.log("Initialized 'isApplicationEnabled' to false.");
+        } else {
+            console.log("'isApplicationEnabled' already exists:", existingConfig.value);
+        }
+    } catch (err) {
+        console.error("Error initializing application state:", err.message);
+    }
+}
 
+
+async function initializeAutomaticResponseState() {
+    try {
+        // Prüfen, ob der Eintrag bereits existiert
+        const existingConfig = await Config.findOne({ key: 'automaticResponseState' });
+        if (!existingConfig) {
+            // Wenn nicht vorhanden, Standardwert setzen
+            await Config.create({ key: 'automaticResponseState', value: false }); // Standardwert: false
+            console.log("Initialized 'automaticResponseState' to false.");
+        } else {
+            console.log("'automaticResponseState' already exists:", existingConfig.value);
+        }
+    } catch (err) {
+        console.error("Error initializing automatic response state:", err.message);
+    }
+}
+
+// Rufe die Initialisierungsfunktion beim Serverstart auf
+initializeAutomaticResponseState();
+
+// Rufe die Initialisierungsfunktion beim Serverstart auf
+initializeApplicationState();
 
 // Lade den Automatic Response-State from Database at Application Start
 loadAutomaticResponseState().then(() => {
@@ -105,7 +149,7 @@ const swaggerSpec = swaggerJsdoc({
     apis: ['./src/routes/*.js'],
 });
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-const PORT = process.env.PORT || 3000;
+const PORT = config.PORT || 3000;
 
 
 app.use((req, res, next) => {
@@ -126,4 +170,4 @@ app.use(errorMiddleware);
 // Server starten
 //app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-module.exports = app;
+module.exports = {app, config};

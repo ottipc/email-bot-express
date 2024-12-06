@@ -4,7 +4,8 @@
   "description": "",
   "main": "src/app.js",
   "scripts": {
-    "start": "node server.js",
+    "dev" : "NODE_ENV=development node server.js",
+    "start": "NODE_ENV=production node server.js",
     "test": "jest"
   },
   "dependencies": {
